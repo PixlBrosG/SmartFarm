@@ -35,4 +35,6 @@ namespace SmartFarm::Protocol {
 		}
 	}
 
+	MessageType FromString(const std::string& str);
+
 }

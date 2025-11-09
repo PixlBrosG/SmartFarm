@@ -2,6 +2,7 @@
 add_library(SmartFarm_Common
         Common/Protocol.cpp
         Common/Message.cpp
+        Common/SensorData.cpp
 )
 target_include_directories(SmartFarm_Common PUBLIC
     ${CMAKE_SOURCE_DIR}/include
@@ -11,6 +12,7 @@ target_link_libraries(SmartFarm_Common
     PUBLIC
         Threads::Threads
         spdlog::spdlog
+        nlohmann_json::nlohmann_json
 )
 if (Asio_FOUND)
     target_link_libraries(SmartFarm_Common PUBLIC Asio::asio)

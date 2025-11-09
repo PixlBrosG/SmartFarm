@@ -11,7 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 find_package(Threads REQUIRED)
 
-# Try to find ASIO (system package)
+# --- Asio ---
 find_package(Asio QUIET)
 
 if (NOT Asio_FOUND)
@@ -24,7 +24,7 @@ if (NOT Asio_FOUND)
     FetchContent_MakeAvailable(asio)
 endif()
 
-# Try to find spdlog
+# --- spdlog ---
 find_package(spdlog QUIET)
 
 if (NOT spdlog_FOUND)
@@ -35,6 +35,18 @@ if (NOT spdlog_FOUND)
             GIT_TAG v1.16.0
     )
     FetchContent_MakeAvailable(spdlog)
+endif()
+
+## --- nlohmann_json ---
+find_package(nlohmann_json QUIET)
+if (NOT nlohmann_json_FOUND)
+    message(STATUS "nlohmann_json not found - fetching standalone version via FetchContent...")
+    FetchContent_Declare(
+            nlohmann_json
+            GIT_REPOSITORY https://github.com/nlohmann/json.git
+            GIT_TAG v3.11.3
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
 endif()
 
 # ---- Include subdirectories ----

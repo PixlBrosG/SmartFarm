@@ -1,0 +1,23 @@
+#include "SmartFarm/Message.h"
+
+namespace SmartFarm {
+
+	std::string Message::Serialize() const
+	{
+		nlohmann::json json;
+		json["type"] = Protocol::ToString(Type);
+		json["payload"] = Payload;
+	}
+
+	Message Message::Deserialize(const std::string& data)
+	{
+		auto json = nlohmann::json::parse(data);
+		Message msg;
+
+		std::string type = json.at("type");
+		msg.Type = Protocol::FromString(type);
+		msg.Payload = json.at("payload");
+		return msg;
+	}
+
+}
