@@ -19,9 +19,22 @@ if (NOT Asio_FOUND)
     FetchContent_Declare(
         asio
         GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-        GIT_TAG master
+        GIT_TAG asio-1-36-0
     )
     FetchContent_MakeAvailable(asio)
+endif()
+
+# Try to find spdlog
+find_package(spdlog QUIET)
+
+if (NOT spdlog_FOUND)
+    message(STATUS "spdlog not found - fetching standalone version via FetchContent...")
+    FetchContent_Declare(
+            spdlog
+            GIT_REPOSITORY https://github.com/gabime/spdlog.git
+            GIT_TAG v1.16.0
+    )
+    FetchContent_MakeAvailable(spdlog)
 endif()
 
 # ---- Include subdirectories ----
