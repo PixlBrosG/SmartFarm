@@ -66,7 +66,7 @@ namespace SmartFarm {
 		}
 
 		// TODO: Handle duplicates
-		m_Nodes[nodeId] = { role, conn };
+		m_Nodes[nodeId] = { Protocol::NodeRoleFromString(role), conn };
 
 		Logger::info("Node {} registered as {}", nodeId, role);
 
@@ -106,7 +106,7 @@ namespace SmartFarm {
 		}
 
 		auto& targetInfo = it->second;
-		if (targetInfo.Role != "sensor")
+		if (targetInfo.Role != Protocol::NodeRole::Sensor)
 		{
 			Logger::warn("COMMAND target {} is not a sensor", targetNode);
 			// TODO: Send error response

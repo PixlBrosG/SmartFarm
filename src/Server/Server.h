@@ -12,7 +12,7 @@ namespace SmartFarm {
 
 	struct NodeInfo
 	{
-		std::string Role;
+		Protocol::NodeRole Role;
 		std::shared_ptr<Connection> Conn;
 	};
 

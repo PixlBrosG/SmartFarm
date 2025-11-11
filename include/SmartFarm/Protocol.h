@@ -21,6 +21,13 @@ namespace SmartFarm::Protocol {
 		ERROR
 	};
 
+	enum class NodeRole : uint8_t
+	{
+		Unknown,
+		Sensor,
+		Control
+	};
+
 	inline std::string ToString(MessageType type)
 	{
 		switch (type)
@@ -35,6 +42,18 @@ namespace SmartFarm::Protocol {
 		}
 	}
 
-	MessageType FromString(const std::string& str);
+	MessageType MessageTypeFromString(const std::string& str);
+
+	inline std::string ToString(NodeRole role)
+	{
+		switch (role)
+		{
+			case NodeRole::Sensor: return "sensor";
+			case NodeRole::Control: return "control";
+			default: return "unknown";
+		}
+	}
+
+	NodeRole NodeRoleFromString(const std::string& str);
 
 }

@@ -32,7 +32,7 @@ namespace SmartFarm {
 	{
 		Message msg;
 		msg.Type = Protocol::MessageType::HELLO;
-		msg.Payload = {{ "node_id", 999 }, { "role", "control" }};
+		msg.Payload = {{ "node_id", 999 }, { "role", ToString(Protocol::NodeRole::Control) }};
 		m_Conn->Send(msg);
 		Logger::info("HELLO sent (control panel).");
 	}

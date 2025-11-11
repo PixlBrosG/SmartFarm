@@ -2,7 +2,7 @@
 
 namespace SmartFarm::Protocol {
 
-	MessageType FromString(const std::string& str)
+	MessageType MessageTypeFromString(const std::string& str)
 	{
 		if (str == "HELLO") return MessageType::HELLO;
 		if (str == "ACK") return MessageType::ACK;
@@ -11,6 +11,13 @@ namespace SmartFarm::Protocol {
 		if (str == "COMMAND") return MessageType::COMMAND;
 		if (str == "ERROR") return MessageType::ERROR;
 		return MessageType::ERROR;
+	}
+
+	NodeRole NodeRoleFromString(const std::string& str)
+	{
+		if (str == "sensor") return NodeRole::Sensor;
+		if (str == "control") return NodeRole::Control;
+		return NodeRole::Unknown;
 	}
 
 }

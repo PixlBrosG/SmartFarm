@@ -34,7 +34,7 @@ namespace SmartFarm {
 	{
 		Message msg;
 		msg.Type = Protocol::MessageType::HELLO;
-		msg.Payload = {{ "node_id", m_NodeId }, { "role", "sensor" }};
+		msg.Payload = {{ "node_id", m_NodeId }, { "role", ToString(Protocol::NodeRole::Sensor) }};
 		m_Conn->Send(msg);
 		Logger::info("HELLO sent (node {}).", m_NodeId);
 	}
