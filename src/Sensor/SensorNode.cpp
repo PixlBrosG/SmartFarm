@@ -24,10 +24,21 @@ namespace SmartFarm {
 				}
 				else
 				{
-					Logger::error("Connection failed: {}", ec.message());
-					// TODO: Retry later
+					Logger::error("Connection failed: {} - retrying in 5s", ec.message());
+					RetryConnect();
 				}
 			});
+	}
+
+	void SensorNode::RetryConnect()
+	{
+		auto self = shared_from_this();
+		m_Timer.expires_after(std::chrono::seconds(5));
+		m_Timer.async_wait([self](std::error_code ec)
+		{
+			if (!ec)
+				self->Connect();
+		});
 	}
 
 	void SensorNode::SendHello()

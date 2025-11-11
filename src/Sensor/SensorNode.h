@@ -24,6 +24,7 @@ namespace SmartFarm {
 		void Start() { Connect(); }
 	private:
 		void Connect();
+		void RetryConnect();
 		void SendHello();
 		void ScheduleUpdate();
 		void SendSensorUpdate();
