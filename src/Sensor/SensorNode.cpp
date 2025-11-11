@@ -74,8 +74,20 @@ namespace SmartFarm {
 		using namespace Protocol;
 		if (msg.Type == MessageType::COMMAND)
 		{
-			Logger::info("Received COMMAND: {}", msg.Payload.dump());
-			// TODO: act on command (toggle actuator, reply with ACTUATOR_STATUS)
+			std::string actuator = msg.Payload.value("target_actuator", "unknown");
+			std::string action = msg.Payload.value("action", "unknown");
+			Logger::info("Received COMMAND: {} -> {}", actuator, action);
+
+			// TODO: Update status
+
+			Message status;
+			status.Type = Protocol::MessageType::ACTUATOR_STATUS;
+			status.Payload = {
+				{"node_id", m_NodeId},
+				{"actuator", actuator},
+				{"status", action}
+			};
+			m_Conn->Send(status);
 		}
 		else
 		{

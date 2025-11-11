@@ -10,6 +10,12 @@
 
 namespace SmartFarm {
 
+	struct NodeInfo
+	{
+		std::string Role;
+		std::shared_ptr<Connection> Conn;
+	};
+
 	class Server : public std::enable_shared_from_this<Server>
 	{
 	public:
@@ -30,7 +36,7 @@ namespace SmartFarm {
 	private:
 		asio::io_context& m_IO;
 		asio::ip::tcp::acceptor m_Acceptor;
-		std::unordered_map<int, std::shared_ptr<Connection>> m_Nodes;
+		std::unordered_map<int, NodeInfo> m_Nodes;
 	};
 
 }

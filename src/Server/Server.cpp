@@ -57,8 +57,18 @@ namespace SmartFarm {
 	{
 		int nodeId = msg.Payload.value("node_id", -1);
 		std::string role = msg.Payload.value("role", "unknown");
+
+		if (nodeId == -1)
+		{
+			Logger::warn("HELLO missing node_id");
+			// TODO: send error response
+			return;
+		}
+
+		// TODO: Handle duplicates
+		m_Nodes[nodeId] = { role, conn };
+
 		Logger::info("Node {} registered as {}", nodeId, role);
-		m_Nodes[nodeId] = conn;
 
 		Message ack;
 		ack.Type = Protocol::MessageType::ACK;
@@ -74,8 +84,43 @@ namespace SmartFarm {
 
 	void Server::HandleCommand(const std::shared_ptr<Connection>& conn, const Message& msg)
 	{
-		Logger::info("Command: {}", msg.Payload.dump());
-		// TODO: Implement (e.g. forward to target node)
+		int targetNode = msg.Payload.value("target_node", -1);
+		if (targetNode == -1)
+		{
+			Logger::warn("COMMAND missing target_node");
+			// TODO: send error response
+			return;
+		}
+
+		auto it = m_Nodes.find(targetNode);
+		if (it == m_Nodes.end())
+		{
+			Logger::warn("COMMAND target node {} not found", targetNode);
+
+			// Send error ACK to sender
+			Message error;
+			error.Type = Protocol::MessageType::ACK;
+			error.Payload = {{"error", "Target not found"}};
+			conn->Send(error);
+			return;
+		}
+
+		auto& targetInfo = it->second;
+		if (targetInfo.Role != "sensor")
+		{
+			Logger::warn("COMMAND target {} is not a sensor", targetNode);
+			// TODO: Send error response
+			return;
+		}
+
+		Logger::info("Forwarding COMMAND from control panel to node {}", targetNode);
+		targetInfo.Conn->Send(msg);
+
+		// Confirm to control panel
+		Message ack;
+		ack.Type = Protocol::MessageType::ACK;
+		ack.Payload = {{"message", "Command forwarded"}, {"target_node", targetNode}};
+		conn->Send(ack);
 	}
 
 }
