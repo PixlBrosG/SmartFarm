@@ -7,6 +7,7 @@ namespace SmartFarm {
 		nlohmann::json json;
 		json["type"] = Protocol::ToString(Type);
 		json["payload"] = Payload;
+		return json.dump();
 	}
 
 	Message Message::Deserialize(const std::string& data)
