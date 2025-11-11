@@ -40,7 +40,8 @@ namespace SmartFarm {
 	void ControlPanel::CommandLoop()
 	{
 		std::thread([self = shared_from_this()] {
-			while (true) {
+			while (true)
+			{
 				std::string line;
 				std::getline(std::cin, line);
 
@@ -50,7 +51,8 @@ namespace SmartFarm {
 				std::istringstream iss(line);
 				std::string cmd;
 				iss >> cmd;
-				if (cmd == "send") {
+				if (cmd == "send")
+				{
 					int targetNode;
 					std::string targetActuator, action;
 					iss >> targetNode >> targetActuator >> action;
@@ -65,7 +67,22 @@ namespace SmartFarm {
 
 					self->m_Conn->Send(msg);
 					Logger::info("Sent COMMAND: {}", msg.Payload.dump());
-				} else {
+				}
+				else if (cmd == "list") {
+					Message msg;
+					msg.Type = Protocol::MessageType::LIST_NODES;
+					self->m_Conn->Send(msg);
+					Logger::info("Requested node list");
+				}
+				else if (cmd == "help") {
+					Logger::info("Available commands:");
+					Logger::info("  send <node_id> <actuator> <action>  - Send a command to a sensor node");
+					Logger::info("  list                                - List active nodes");
+					Logger::info("  help                                - Show this help menu");
+					Logger::info("  quit                                - Exit the program");
+				}
+				else
+				{
 					Logger::warn("Unknown command '{}'", cmd);
 				}
 			}
@@ -92,6 +109,13 @@ namespace SmartFarm {
 			// NOTE: Control Panel doesn't need to know about its ID, so we can ignore assigned ID
 			Logger::debug("Received ACK: {}", msg.Payload.dump());
 			break;
+		case MessageType::NODE_LIST:
+		{
+			Logger::info("Active nodes:");
+			for (const auto& node : msg.Payload["nodes"])
+				Logger::info(" - Node {} ({})", node["node_id"].get<int>(), node["role"].get<std::string>());
+			break;
+		}
 		case MessageType::ERROR:
 			Logger::error("Received error: {}", msg.Payload.dump());
 		default:

@@ -10,6 +10,8 @@ namespace SmartFarm::Protocol {
 		if (str == "ACTUATOR_STATUS") return MessageType::ACTUATOR_STATUS;
 		if (str == "COMMAND") return MessageType::COMMAND;
 		if (str == "ERROR") return MessageType::ERROR;
+		if (str == "LIST_NODES") return MessageType::LIST_NODES;
+		if (str == "NODE_LIST") return MessageType::NODE_LIST;
 		return MessageType::ERROR;
 	}
 

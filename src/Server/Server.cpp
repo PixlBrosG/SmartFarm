@@ -66,6 +66,9 @@ namespace SmartFarm {
 		case MessageType::COMMAND:
 			HandleCommand(conn, msg);
 			break;
+		case MessageType::LIST_NODES:
+			HandleListNodes(conn, msg);
+			break;
 		default:
 			Logger::warn("Unhandled message type {}", ToString(msg.Type));
 		}
@@ -171,6 +174,24 @@ namespace SmartFarm {
 		ack.Type = Protocol::MessageType::ACK;
 		ack.Payload = {{"message", "Command forwarded"}, {"target_node", targetNode}};
 		conn->Send(ack);
+	}
+
+	void Server::HandleListNodes(const std::shared_ptr<Connection>& conn, const Message& msg)
+	{
+		nlohmann::json list;
+		for (const auto& [id, node] : m_Sensors) {
+			list.push_back({
+				{"node_id", id},
+				{"role", Protocol::ToString(node.Role)}
+			});
+		}
+
+		Message reply;
+		reply.Type = Protocol::MessageType::NODE_LIST;
+		reply.Payload = {{"nodes", list}};
+		conn->Send(reply);
+
+		Logger::info("Sent node list to control panel ({} sensors)", list.size());
 	}
 
 	void Server::BroadcastToControls(const Message& msg) const

@@ -34,6 +34,7 @@ namespace SmartFarm {
 		inline void HandleHello(const std::shared_ptr<Connection>& conn, const Message& msg);
 		inline void HandleSensorUpdate(const std::shared_ptr<Connection>& conn, const Message& msg);
 		inline void HandleCommand(const std::shared_ptr<Connection>& conn, const Message& msg);
+		inline void HandleListNodes(const std::shared_ptr<Connection>& conn, const Message& msg);
 
 		void BroadcastToControls(const Message& msg) const;
 	private:
