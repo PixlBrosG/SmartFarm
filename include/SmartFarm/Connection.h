@@ -20,6 +20,8 @@ namespace SmartFarm {
 		void Send(const Message& message);
 
 		void SetDisconnectHandler(DisconnectHandler handler) { m_OnDisconnect = std::move(handler); }
+
+		void SendError(const std::string& reason, int code = 400);
 	private:
 		void ReadHeader();
 		void ReadBody();

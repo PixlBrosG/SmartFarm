@@ -92,6 +92,8 @@ namespace SmartFarm {
 			// NOTE: Control Panel doesn't need to know about its ID, so we can ignore assigned ID
 			Logger::debug("Received ACK: {}", msg.Payload.dump());
 			break;
+		case MessageType::ERROR:
+			Logger::error("Received error: {}", msg.Payload.dump());
 		default:
 			Logger::debug("Unhandled message type: {}", ToString(msg.Type));
 		}

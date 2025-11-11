@@ -143,7 +143,7 @@ namespace SmartFarm {
 		if (targetNode == -1)
 		{
 			Logger::warn("COMMAND missing target_node");
-			// TODO: send error response
+			conn->SendError("Missing target_node");
 			return;
 		}
 
@@ -151,12 +151,7 @@ namespace SmartFarm {
 		if (it == m_Sensors.end())
 		{
 			Logger::warn("COMMAND target node {} not found", targetNode);
-
-			// Send error ACK to sender
-			Message error;
-			error.Type = Protocol::MessageType::ACK;
-			error.Payload = {{"error", "Target not found"}};
-			conn->Send(error);
+			conn->SendError("Target node not found");
 			return;
 		}
 
@@ -164,7 +159,7 @@ namespace SmartFarm {
 		if (targetInfo.Role != Protocol::NodeRole::Sensor)
 		{
 			Logger::warn("COMMAND target {} is not a sensor", targetNode);
-			// TODO: Send error response
+			conn->SendError("Target is not a sensor");
 			return;
 		}
 

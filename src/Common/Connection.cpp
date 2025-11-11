@@ -19,6 +19,17 @@ namespace SmartFarm {
 		asio::write(m_Socket, buffers);
 	}
 
+	void Connection::SendError(const std::string& reason, int code)
+	{
+		Message err;
+		err.Type = Protocol::MessageType::ERROR;
+		err.Payload = {
+			{"error", reason},
+			{"code", code}
+		};
+		Send(err);
+	}
+
 	void Connection::ReadHeader()
 	{
 		auto self = shared_from_this();
