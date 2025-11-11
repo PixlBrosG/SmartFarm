@@ -74,16 +74,14 @@ namespace SmartFarm {
 		using namespace Protocol;
 		switch (msg.Type)
 		{
-		case Protocol::MessageType::COMMAND:
+		case MessageType::COMMAND:
 		{
 			std::string actuator = msg.Payload.value("target_actuator", "unknown");
 			std::string action = msg.Payload.value("action", "unknown");
 			Logger::info("Received COMMAND: {} -> {}", actuator, action);
 
-			// TODO: Update status
-
 			Message status;
-			status.Type = Protocol::MessageType::ACTUATOR_STATUS;
+			status.Type = MessageType::ACTUATOR_STATUS;
 			status.Payload = {
 				{"node_id", m_NodeId},
 				{"actuator", actuator},
@@ -92,12 +90,13 @@ namespace SmartFarm {
 			m_Conn->Send(status);
 			break;
 		}
-		case Protocol::MessageType::ACK:
+		case MessageType::ACK:
 			if (msg.Payload.contains("assigned_id"))
 			{
 				m_NodeId = msg.Payload["assigned_id"];
 				Logger::info("Assigned ID by server: {}", m_NodeId);
 			}
+			break;
 		default:
 			Logger::debug("Unhandled message type: {}", ToString(msg.Type));
 		}

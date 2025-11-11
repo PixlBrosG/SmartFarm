@@ -31,9 +31,11 @@ namespace SmartFarm {
 					m_IncomingData.resize(m_IncomingLength);
 					ReadBody();
 				}
-				else if (ec != asio::error::eof)
+				else
 				{
-					Logger::error("Header read error: {}", ec.message());
+					if (ec != asio::error::eof)
+						Logger::error("Header read error: {}", ec.message());
+					HandleDisconnect(ec);
 				}
 			});
 	}
@@ -50,11 +52,24 @@ namespace SmartFarm {
 					if (m_Handler) m_Handler(msg);
 					ReadHeader();
 				}
-				else if (ec != asio::error::eof)
+				else
 				{
-					Logger::error("Body read error: {}", ec.message());
+					if (ec != asio::error::eof)
+						Logger::error("Body read error: {}", ec.message());
+					HandleDisconnect(ec);
 				}
 			});
+	}
+
+	void Connection::HandleDisconnect(const std::error_code& ec)
+	{
+		if (ec == asio::error::eof || ec == asio::error::connection_reset)
+			Logger::info("Client disconnected cleanly");
+		else
+			Logger::warn("Connection closed with error: {}", ec.message());
+
+		if (m_OnDisconnect)
+			m_OnDisconnect(shared_from_this());
 	}
 
 }

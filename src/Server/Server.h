@@ -26,10 +26,9 @@ namespace SmartFarm {
 		}
 
 		void Start();
-
-		void RemoveConnection(const std::shared_ptr<Connection>& conn);
 	private:
 		void AcceptLoop();
+		void HandleDisconnect(const std::shared_ptr<Connection>& conn);
 		void OnMessage(const std::shared_ptr<Connection>& conn, const Message& msg);
 
 		inline void HandleHello(const std::shared_ptr<Connection>& conn, const Message& msg);

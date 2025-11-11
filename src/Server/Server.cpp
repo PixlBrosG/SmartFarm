@@ -10,7 +10,32 @@ namespace SmartFarm {
 		AcceptLoop();
 	}
 
-	void Server::RemoveConnection(const std::shared_ptr<Connection>& conn) {
+	void Server::AcceptLoop()
+	{
+		auto self = shared_from_this();
+		m_Acceptor.async_accept(
+			[this, self](std::error_code ec, asio::ip::tcp::socket socket)
+			{
+				if (!ec)
+				{
+					auto endpoint = socket.remote_endpoint();
+					Logger::info("Accepted connection from {}:{}", endpoint.address().to_string(), endpoint.port());
+
+					auto conn = std::make_shared<Connection>(std::move(socket));
+					conn->SetDisconnectHandler([this](auto c) { HandleDisconnect(c); });
+					conn->Start([this, conn](const Message& msg) { OnMessage(conn, msg); });
+				}
+				else
+				{
+					Logger::error("Accept error: {}", ec.message());
+				}
+
+				// Keep accepting new clients
+				AcceptLoop();
+			});
+	}
+
+	void Server::HandleDisconnect(const std::shared_ptr<Connection>& conn) {
 		// erase from m_Sensors if found
 		for (auto it = m_Sensors.begin(); it != m_Sensors.end(); ++it) {
 			if (it->second.Conn == conn) {
@@ -25,30 +50,6 @@ namespace SmartFarm {
 			m_ControlPanels.end()
 		);
 		Logger::info("Control panel disconnected");
-	}
-
-	void Server::AcceptLoop()
-	{
-		auto self = shared_from_this();
-		m_Acceptor.async_accept(
-			[this, self](std::error_code ec, asio::ip::tcp::socket socket)
-			{
-				if (!ec)
-				{
-					auto endpoint = socket.remote_endpoint();
-					Logger::info("Accepted connection from {}:{}", endpoint.address().to_string(), endpoint.port());
-
-					auto conn = std::make_shared<Connection>(std::move(socket));
-					conn->Start([this, conn](const Message& msg) { OnMessage(conn, msg); });
-				}
-				else
-				{
-					Logger::error("Accept error: {}", ec.message());
-				}
-
-				// Keep accepting new clients
-				AcceptLoop();
-			});
 	}
 
 	void Server::OnMessage(const std::shared_ptr<Connection>& conn, const Message& msg)
