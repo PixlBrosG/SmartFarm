@@ -10,13 +10,21 @@ namespace SmartFarm {
 		AcceptLoop();
 	}
 
-	void Server::RemoveNode(int nodeId)
-	{
-		if (auto it = m_Nodes.find(nodeId); it != m_Nodes.end())
-		{
-			Logger::info("Node {} ({}) disconnected", nodeId, ToString(it->second.Role));
-			m_Nodes.erase(it);
+	void Server::RemoveConnection(const std::shared_ptr<Connection>& conn) {
+		// erase from m_Sensors if found
+		for (auto it = m_Sensors.begin(); it != m_Sensors.end(); ++it) {
+			if (it->second.Conn == conn) {
+				Logger::info("Sensor {} disconnected", it->first);
+				m_Sensors.erase(it);
+				return;
+			}
 		}
+		// otherwise remove from control panels
+		m_ControlPanels.erase(
+			std::ranges::remove(m_ControlPanels, conn).begin(),
+			m_ControlPanels.end()
+		);
+		Logger::info("Control panel disconnected");
 	}
 
 	void Server::AcceptLoop()
@@ -66,36 +74,66 @@ namespace SmartFarm {
 	{
 		int requestedId = msg.Payload.value("node_id", -1);
 		std::string roleStr = msg.Payload.value("role", "unknown");
-		Protocol::NodeRole role = Protocol::NodeRoleFromString(roleStr);
+		auto role = Protocol::NodeRoleFromString(roleStr);
 
-		int assignedId = requestedId;
-		if (requestedId == -1 || m_Nodes.contains(requestedId))
-		{
-			do
-			{
-				assignedId = ++m_LastAssignedId;
-			}
-			while (m_Nodes.contains(assignedId));
+		if (role == Protocol::NodeRole::Unknown) {
+			Logger::warn("HELLO with unknown role '{}'", roleStr);
+			Message err;
+			err.Type = Protocol::MessageType::ACK;
+			err.Payload = {{"error", "Invalid role"}};
+			conn->Send(err);
+			return;
 		}
 
-		m_Nodes[assignedId] = { role, conn };
+		int assignedId = requestedId;
 
-		Logger::info("Node {} registered as {}", assignedId, ToString(role));
+		if (role == Protocol::NodeRole::Sensor) {
+			// Assign an ID only for sensors
+			if (requestedId == -1 || m_Sensors.contains(requestedId)) {
+				do {
+					assignedId = ++m_LastAssignedId;
+				} while (m_Sensors.contains(assignedId));
+			}
 
-		// ACK with assigned ID
+			m_Sensors[assignedId] = {role, conn};
+			Logger::info("Sensor node {} registered", assignedId);
+		}
+		else if (role == Protocol::NodeRole::Control) {
+			// No unique ID needed for control panels
+			m_ControlPanels.push_back(conn);
+			Logger::info("Control panel connected");
+		}
+
+		// ACK with optional assigned ID
 		Message ack;
 		ack.Type = Protocol::MessageType::ACK;
-		ack.Payload = {
-			{"message", "Node registered"},
-			{"assigned_id", assignedId}
-		};
+		ack.Payload = {{"message", "Node registered"}};
+		if (role == Protocol::NodeRole::Sensor)
+			ack.Payload["assigned_id"] = assignedId;
+
 		conn->Send(ack);
 	}
 
 	void Server::HandleSensorUpdate(const std::shared_ptr<Connection>& conn, const Message& msg)
 	{
-		Logger::info("Sensor update: {}", msg.Payload.dump());
-		// TODO: Implement (e.g. forward to control panels)
+		int nodeId = msg.Payload.value("node_id", -1);
+		if (nodeId == -1)
+		{
+			Logger::warn("Received SENSOR_UPDATE with missing node_id");
+			return;
+		}
+
+		// Verify this node is actually registered as a sensor
+		auto it = m_Sensors.find(nodeId);
+		if (it == m_Sensors.end())
+		{
+			Logger::warn("Received SENSOR_UPDATE from unregistered node {}", nodeId);
+			return;
+		}
+
+		Logger::info("Forwarding data from node {} to {} control panel(s)", nodeId, m_ControlPanels.size());
+
+		BroadcastToControls(msg);
 	}
 
 	void Server::HandleCommand(const std::shared_ptr<Connection>& conn, const Message& msg)
@@ -108,8 +146,8 @@ namespace SmartFarm {
 			return;
 		}
 
-		auto it = m_Nodes.find(targetNode);
-		if (it == m_Nodes.end())
+		auto it = m_Sensors.find(targetNode);
+		if (it == m_Sensors.end())
 		{
 			Logger::warn("COMMAND target node {} not found", targetNode);
 
@@ -138,5 +176,21 @@ namespace SmartFarm {
 		ack.Payload = {{"message", "Command forwarded"}, {"target_node", targetNode}};
 		conn->Send(ack);
 	}
+
+	void Server::BroadcastToControls(const Message& msg) const
+	{
+		for (auto& controlPanel : m_ControlPanels)
+		{
+			try
+			{
+				controlPanel->Send(msg);
+			}
+			catch (const std::exception& e)
+			{
+				Logger::error("Failed to broadcast to control panel: {}", e.what());
+			}
+		}
+	}
+
 
 }

@@ -27,7 +27,7 @@ namespace SmartFarm {
 
 		void Start();
 
-		void RemoveNode(int nodeId);
+		void RemoveConnection(const std::shared_ptr<Connection>& conn);
 	private:
 		void AcceptLoop();
 		void OnMessage(const std::shared_ptr<Connection>& conn, const Message& msg);
@@ -35,10 +35,14 @@ namespace SmartFarm {
 		inline void HandleHello(const std::shared_ptr<Connection>& conn, const Message& msg);
 		inline void HandleSensorUpdate(const std::shared_ptr<Connection>& conn, const Message& msg);
 		inline void HandleCommand(const std::shared_ptr<Connection>& conn, const Message& msg);
+
+		void BroadcastToControls(const Message& msg) const;
 	private:
 		asio::io_context& m_IO;
 		asio::ip::tcp::acceptor m_Acceptor;
-		std::unordered_map<int, NodeInfo> m_Nodes;
+
+		std::unordered_map<int, NodeInfo> m_Sensors;
+		std::vector<std::shared_ptr<Connection>> m_ControlPanels;
 
 		int m_LastAssignedId = 0;
 	};
