@@ -89,6 +89,7 @@ namespace SmartFarm {
 			Logger::info("Actuator status: {}", msg.Payload.dump());
 			break;
 		case MessageType::ACK:
+			// NOTE: Control Panel doesn't need to know about its ID, so we can ignore assigned ID
 			Logger::debug("Received ACK: {}", msg.Payload.dump());
 			break;
 		default:

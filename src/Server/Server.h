@@ -26,6 +26,8 @@ namespace SmartFarm {
 		}
 
 		void Start();
+
+		void RemoveNode(int nodeId);
 	private:
 		void AcceptLoop();
 		void OnMessage(const std::shared_ptr<Connection>& conn, const Message& msg);
@@ -37,6 +39,8 @@ namespace SmartFarm {
 		asio::io_context& m_IO;
 		asio::ip::tcp::acceptor m_Acceptor;
 		std::unordered_map<int, NodeInfo> m_Nodes;
+
+		int m_LastAssignedId = 0;
 	};
 
 }

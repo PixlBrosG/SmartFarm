@@ -10,6 +10,15 @@ namespace SmartFarm {
 		AcceptLoop();
 	}
 
+	void Server::RemoveNode(int nodeId)
+	{
+		if (auto it = m_Nodes.find(nodeId); it != m_Nodes.end())
+		{
+			Logger::info("Node {} ({}) disconnected", nodeId, ToString(it->second.Role));
+			m_Nodes.erase(it);
+		}
+	}
+
 	void Server::AcceptLoop()
 	{
 		auto self = shared_from_this();
@@ -55,24 +64,31 @@ namespace SmartFarm {
 
 	void Server::HandleHello(const std::shared_ptr<Connection>& conn, const Message& msg)
 	{
-		int nodeId = msg.Payload.value("node_id", -1);
-		std::string role = msg.Payload.value("role", "unknown");
+		int requestedId = msg.Payload.value("node_id", -1);
+		std::string roleStr = msg.Payload.value("role", "unknown");
+		Protocol::NodeRole role = Protocol::NodeRoleFromString(roleStr);
 
-		if (nodeId == -1)
+		int assignedId = requestedId;
+		if (requestedId == -1 || m_Nodes.contains(requestedId))
 		{
-			Logger::warn("HELLO missing node_id");
-			// TODO: send error response
-			return;
+			do
+			{
+				assignedId = ++m_LastAssignedId;
+			}
+			while (m_Nodes.contains(assignedId));
 		}
 
-		// TODO: Handle duplicates
-		m_Nodes[nodeId] = { Protocol::NodeRoleFromString(role), conn };
+		m_Nodes[assignedId] = { role, conn };
 
-		Logger::info("Node {} registered as {}", nodeId, role);
+		Logger::info("Node {} registered as {}", assignedId, ToString(role));
 
+		// ACK with assigned ID
 		Message ack;
 		ack.Type = Protocol::MessageType::ACK;
-		ack.Payload = {{"message", "Node registered"}};
+		ack.Payload = {
+			{"message", "Node registered"},
+			{"assigned_id", assignedId}
+		};
 		conn->Send(ack);
 	}
 

@@ -72,7 +72,9 @@ namespace SmartFarm {
 	void SensorNode::OnMessage(const Message& msg)
 	{
 		using namespace Protocol;
-		if (msg.Type == MessageType::COMMAND)
+		switch (msg.Type)
+		{
+		case Protocol::MessageType::COMMAND:
 		{
 			std::string actuator = msg.Payload.value("target_actuator", "unknown");
 			std::string action = msg.Payload.value("action", "unknown");
@@ -88,9 +90,15 @@ namespace SmartFarm {
 				{"status", action}
 			};
 			m_Conn->Send(status);
+			break;
 		}
-		else
-		{
+		case Protocol::MessageType::ACK:
+			if (msg.Payload.contains("assigned_id"))
+			{
+				m_NodeId = msg.Payload["assigned_id"];
+				Logger::info("Assigned ID by server: {}", m_NodeId);
+			}
+		default:
 			Logger::debug("Unhandled message type: {}", ToString(msg.Type));
 		}
 	}
