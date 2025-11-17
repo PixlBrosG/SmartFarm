@@ -1,5 +1,7 @@
 #include "SmartFarm/Connection.h"
 
+#include "SmartFarm/Crypto.h"
+
 namespace SmartFarm {
 
 	void Connection::Start(MessageHandler handler)
@@ -11,6 +13,8 @@ namespace SmartFarm {
 	void Connection::Send(const Message& message)
 	{
 		std::string payload = message.Serialize();
+		payload = Crypto::XorEncryptDecrypt(payload);
+
 		uint32_t length = htonl(static_cast<uint32_t>(payload.size()));
 		std::vector<asio::const_buffer> buffers{
 			asio::buffer(&length, sizeof(length)),
@@ -59,6 +63,7 @@ namespace SmartFarm {
 			{
 				if (!ec)
 				{
+					m_IncomingData = Crypto::XorEncryptDecrypt(m_IncomingData);
 					Message msg = Message::Deserialize(m_IncomingData);
 					if (m_Handler) m_Handler(msg);
 					ReadHeader();
