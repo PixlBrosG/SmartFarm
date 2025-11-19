@@ -1,8 +1,19 @@
-#include "SmartFarm/Logger.h"
+#include <asio.hpp>
 
-int main()
-{
+#include "ControlPanel.h"
+
+int main() {
 	SmartFarm::Logger::init();
 
-	SmartFarm::Logger::info("Starting Control Panel...");
+	try {
+		asio::io_context io;
+		auto control = std::make_shared<SmartFarm::ControlPanel>(
+			io, "127.0.0.1", SmartFarm::Protocol::DEFAULT_PORT);
+		control->Start();
+		io.run();
+	}
+	catch (const std::exception& e)
+	{
+		SmartFarm::Logger::error("Fatal error: {}", e.what());
+	}
 }

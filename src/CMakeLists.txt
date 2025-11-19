@@ -1,5 +1,6 @@
 # Common library (protocol, serialization, etc.)
 add_library(SmartFarm_Common
+        Common/Connection.cpp
         Common/Protocol.cpp
         Common/Message.cpp
         Common/SensorData.cpp
