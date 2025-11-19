@@ -3,50 +3,63 @@
 
 ---
 
-> **Protocol Version:** 1.0
-> **Last updated:** `09/11/2025`
-> **Author:** `Candidate #xxx`
+> **Protocol Version:** 1.1
+> **Last updated:** `19/11/2025`
+> **Author:** `Candidate #10045`
 
 ---
 
 ## 1️⃣ Introduction
-This document describes the **SmartFarm Protocol (SFP)**, a custom application-layer protocol for communication between **sensor/actuator nodes**, **control-panel nodes**, and optionally a **central server** in a simulated smart farming environment.
+This document describes the **SmartFarm Protocol (SFP)**, a custom application-layer protocol for communication between **sensor/actuator nodes**, **control-panel nodes**, and the **central server** in a simulated smart farming environment.
 
 The protocol enables:
 - Exchange of **sensor readings** (e.g., temperature, humidity)
 - **Actuator control commands** (e.g., fan/heater ON/OFF)
 - **Status updates** between nodes  
-  All communication runs directly over ```TCP/UDP```, without higher-level protocols such as HTTP or MQTT.
+  All communication runs directly over ```TCP```, without higher-level protocols such as HTTP or MQTT.
+
+All communication uses a custom framing format (4-byte big-endian length prefix + encrypted JSON payload).
 
 ---
 
 ## 2️⃣ Terminology
-| Term              | Description                                                                   |
-|-------------------|-------------------------------------------------------------------------------|
-| **Node**          | A device participating in the SmartFarm network (sensor, control, or server). |
-| **Sensor Node**   | Simulated device that measures environmental data and exposes actuators.      |
-| **Control Panel** | User-facing node that displays data and sends control commands.               |
-| **Server**        | Optional message broker that routes data and manages node registration.       |
-| **SFP**           | SmartFarm Protocol, the application-layer protocol defined here.              |
-| **Message**       | A structured unit of communication exchanged between nodes.                   |
+| Term                 | Description                                                                   |
+|----------------------|-------------------------------------------------------------------------------|
+| **Node**             | A device participating in the SmartFarm network (sensor, control, or server). |
+| **Sensor Node**      | Simulated device that measures environmental data and exposes actuators.      |
+| **Control Panel**    | User-facing node that displays data and sends control commands.               |
+| **Server**           | Optional message broker that routes data and manages node registration.       |
+| **SFP**              | SmartFarm Protocol, the application-layer protocol defined here.              |
+| **Message**          | A structured unit of communication exchanged between nodes.                   |
+| **Actuator**         | A controllable output (fan, heater, window motor)                             |
+| **Encryption Layer** | Simple XOR-based symmetric cipher applied to all payloads.                    |
 
 ---
 
 ## 3️⃣ Transport
-| Property                 | Value                                   |
-|--------------------------|-----------------------------------------|
-| **Underlying Transport** | `TCP or UDP – decide here`              |
-| **Port Number**          | `12345` (example – configurable)        |
-| **Connection Type**      | `Connection-oriented / Connection-less` |
-| **Protocol State**       | `Stateful / Stateless`                  |
+| Property                 | Value                 |
+|--------------------------|-----------------------|
+| **Underlying Transport** | `TCP`                 |
+| **Port Number**          | `5000` (default)      |
+| **Connection Type**      | `Connection-oriented` |
+| **Protocol State**       | `Stateful`            |
 
 ---
 
 ## 4️⃣ Architecture Overview
+
+SmartFarm uses a server-centric architecture where all communication passes
+through the central server.
+
+Sensor Nodes and Control Panels are separate TCP clients.
+
+Direct Sensor → Control communication does not occur; all routing is handled
+by the server.
+
 **Actors:**
 - Sensor Nodes (`SNode`)
 - Control Panels (`CNode`)
-- Server (optional, `Svr`)
+- Server (`Svr`, central router, required)
 
 **Example flow:**
 ```
@@ -81,6 +94,8 @@ Control Panels can send COMMAND messages to the Server, which forwards them to s
 | `ACTUATOR_STATUS` | Sensor → Server → Control | Report actuator states         |
 | `COMMAND`         | Control → Server → Sensor | Send actuator commands         |
 | `ERROR`           | Any                       | Report protocol or data errors |
+| `LIST_NODES`      | Control → Server          | Request node list              |
+| `NODE_LIST`       | Server → Control          | List nodes                     |
 
 ---
 
@@ -104,13 +119,24 @@ Example COMMAND:
 ```
 {
     "type": "COMMAND",
-    "node_id": 7,
-    "target": "fan",
+    "target_node": 7,
+    "target_actuator": "fan",
     "action": "OFF"
 }
 ```
 
-Alternative: TLV (Type-Length-Value) or fixed-size binary encoding for efficiency.
+### 7.1 Framing
+All messages are prefixed with a 4-byte big-endian unsigned integer indicating
+the payload length.
+
+| uint32 length | encrypted JSON payload |
+
+### 7.2 Encryption
+Before transmission, the JSON payload is XOR-encrypted using a repeating-key
+symmetric cipher.
+
+Decryption applies the same operation.
+
 
 ---
 
@@ -121,6 +147,7 @@ Alternative: TLV (Type-Length-Value) or fixed-size binary encoding for efficienc
 | `HEARTBEAT_INTERVAL` | `5` seconds               |
 | `NODE_ID_UNASSIGNED` | `0`                       |
 | `BROADCAST_ALL`      | `255` (send to all nodes) |
+| `ENCRYPTION_KEY`     | `smartfarm_secret_key`    |
 
 ---
 
@@ -137,22 +164,22 @@ Possible error cases and handling strategies:
 ---
 
 ## 🔒 0️⃣ Reliability and Security
-```
-- TCP ensures delivery ordering and reliability (if chosen)
-- Optional checksum or hash for message integrity
-- Optional encryption layer (AES or RSA)
-- Optional authentication handshake (node ID + token)
-  ```
+This implementation uses a lightweight XOR encryption layer for payload obfuscation.
+This is not cryptographically secure but demonstrates how encryption can be
+integrated at the protocol layer.
+
+Future versions could replace XOR with AES or TLS (asio::ssl::stream) without
+changing the protocol design.
 
 ---
 
 ## 📘 1️⃣ Example Session
 ```
 1. Sensor Node 7 connects to Server and sends HELLO.
-2. Server assigns ID = 7, stores capabilities.
-3. Control Panel connects, subscribes to Node 7.
+2. Server assigns ID = 7.
+3. Control Panel connects.
 4. Sensor sends SENSOR_UPDATE { temp=22.5 }.
-5. Server forwards update to subscribed Control Panels.
+5. Server forwards update to Control Panels.
 6. Control Panel sends COMMAND { fan=ON }.
 7. Server forwards to Node 7.
 8. Sensor toggles actuator, replies ACTUATOR_STATUS.
@@ -161,8 +188,8 @@ Possible error cases and handling strategies:
 ---
 
 ## 🧠 2️⃣ Design Justifications
-- **TCP chosen** for reliability and ordered delivery.
-- **JSON encoding** for readability and debugging.
+- **TCP** chosen for reliability and ordered delivery.
+- **JSON encoding** chosen for simplicity; length-prefixing chosen for robustness over streaming TCP.
 - **Server-based routing** for scalability and simpler addressing.
 - **Extensible message types** for future sensor/actuator additions.
 - **Separation of concerns** between data, commands, and control flow.

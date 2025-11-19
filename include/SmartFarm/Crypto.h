@@ -10,7 +10,7 @@ namespace SmartFarm::Crypto {
 	{
 		std::string out = plainText;
 		for (size_t i = 0; i < plainText.length(); i++)
-			out[i] = plainText[i] ^ KEY[i % KEY.length()];
+			out[i] ^= KEY[i % KEY.length()];
 		return out;
 	}
 
