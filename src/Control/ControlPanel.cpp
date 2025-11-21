@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "SmartFarm/Logger.h"
+
 namespace SmartFarm {
 
 	void ControlPanel::Connect()
@@ -116,7 +118,7 @@ namespace SmartFarm {
 				Logger::info(" - Node {} ({})", node["node_id"].get<int>(), node["role"].get<std::string>());
 			break;
 		}
-		case MessageType::ERROR:
+		case MessageType::ERROR_MSG:
 			Logger::error("Received error: {}", msg.Payload.dump());
 		default:
 			Logger::debug("Unhandled message type: {}", ToString(msg.Type));

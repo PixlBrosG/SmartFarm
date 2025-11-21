@@ -9,10 +9,10 @@ namespace SmartFarm::Protocol {
 		if (str == "SENSOR_UPDATE") return MessageType::SENSOR_UPDATE;
 		if (str == "ACTUATOR_STATUS") return MessageType::ACTUATOR_STATUS;
 		if (str == "COMMAND") return MessageType::COMMAND;
-		if (str == "ERROR") return MessageType::ERROR;
+		if (str == "ERROR") return MessageType::ERROR_MSG;
 		if (str == "LIST_NODES") return MessageType::LIST_NODES;
 		if (str == "NODE_LIST") return MessageType::NODE_LIST;
-		return MessageType::ERROR;
+		return MessageType::ERROR_MSG;
 	}
 
 	NodeRole NodeRoleFromString(const std::string& str)

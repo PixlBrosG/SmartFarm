@@ -18,7 +18,7 @@ namespace SmartFarm::Protocol {
 		SENSOR_UPDATE,
 		ACTUATOR_STATUS,
 		COMMAND,
-		ERROR,
+		ERROR_MSG,
 		LIST_NODES,
 		NODE_LIST
 	};
@@ -39,7 +39,7 @@ namespace SmartFarm::Protocol {
 			case MessageType::SENSOR_UPDATE: return "SENSOR_UPDATE";
 			case MessageType::ACTUATOR_STATUS: return "ACTUATOR_STATUS";
 			case MessageType::COMMAND: return "COMMAND";
-			case MessageType::ERROR: return "ERROR";
+			case MessageType::ERROR_MSG: return "ERROR";
 			case MessageType::LIST_NODES: return "LIST_NODES";
 			case MessageType::NODE_LIST: return "NODE_LIST";
 			default: return "UNKNOWN";

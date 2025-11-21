@@ -2,6 +2,7 @@
 
 #include "SmartFarm/SensorData.h"
 #include "SmartFarm/Util.h"
+#include "SmartFarm/Logger.h"
 
 namespace SmartFarm {
 

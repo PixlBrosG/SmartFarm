@@ -1,6 +1,7 @@
 #include <asio.hpp>
 
 #include "ControlPanel.h"
+#include "SmartFarm/Logger.h"
 
 int main() {
 	SmartFarm::Logger::init();

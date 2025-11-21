@@ -3,7 +3,6 @@
 #include <asio.hpp>
 #include <functional>
 #include "SmartFarm/Message.h"
-#include "SmartFarm/Logger.h"
 
 namespace SmartFarm {
 

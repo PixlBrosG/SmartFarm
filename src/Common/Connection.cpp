@@ -1,6 +1,7 @@
 #include "SmartFarm/Connection.h"
 
 #include "SmartFarm/Crypto.h"
+#include "SmartFarm/Logger.h"
 
 namespace SmartFarm {
 
@@ -26,7 +27,7 @@ namespace SmartFarm {
 	void Connection::SendError(const std::string& reason, int code)
 	{
 		Message err;
-		err.Type = Protocol::MessageType::ERROR;
+		err.Type = Protocol::MessageType::ERROR_MSG;
 		err.Payload = {
 			{"error", reason},
 			{"code", code}

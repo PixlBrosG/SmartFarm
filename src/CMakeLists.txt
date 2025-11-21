@@ -15,6 +15,12 @@ target_link_libraries(SmartFarm_Common
         spdlog::spdlog
         nlohmann_json::nlohmann_json
 )
+
+# Windows needs WinSock2
+if (WIN32)
+    target_link_libraries(SmartFarm_Common PUBLIC ws2_32 mswsock)
+endif()
+
 if (Asio_FOUND)
     target_link_libraries(SmartFarm_Common PUBLIC Asio::asio)
 else()
